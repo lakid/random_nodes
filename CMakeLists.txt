@@ -10,6 +10,7 @@ message_filters
 sensor_msgs
 nav_msgs
 cv_bridge
+image_transport
 )
 
 ## System dependencies are found with CMake's conventions
@@ -128,13 +129,16 @@ include_directories(include)
 
 ## Declare a C++ executable
 add_executable(message_sync src/message_sync.cpp)
-
+add_executable(image_to_laser src/image_to_laser.cpp)
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(random_nodes_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(message_sync
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(image_to_laser
   ${catkin_LIBRARIES}
 )
 
