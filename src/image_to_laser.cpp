@@ -10,7 +10,7 @@
 
 using namespace sensor_msgs;
 
-std::ofstream csvfile_range, csvfile_bearing;
+std::ofstream csvfile_range, csvfile_bearing, csvfile_col, csvfile_row;
 ros::Publisher pub;
 
 void callback(const ImageConstPtr &msg)
@@ -32,10 +32,12 @@ void callback(const ImageConstPtr &msg)
 
   csvfile_range << msg->header.stamp.toNSec();
   csvfile_bearing << msg->header.stamp.toNSec();
+  csvfile_col << msg->header.stamp.toNSec();
+  csvfile_row << msg->header.stamp.toNSec();
 
   for (int row = 0; row < dst.rows; row++ )
   {
-    for (int col = 0; col < dst.cols; col++)
+    for (int col = 0; col < dst.cols/4; col++)
     {
       if (dst.at<int>(cv::Point(col,row)))
       {
@@ -47,6 +49,9 @@ void callback(const ImageConstPtr &msg)
         out_msg.intensities.push_back(bearing);
         csvfile_bearing << ", " << bearing;
 
+        csvfile_col << ", " << col;
+        csvfile_row << ", " << row;
+
         //ROS_INFO("Range: %f, bearing: %f", range, bearing);
       }
     }
@@ -54,6 +59,8 @@ void callback(const ImageConstPtr &msg)
   
   csvfile_range << std::endl;
   csvfile_bearing << std::endl;
+  csvfile_col << std::endl;
+  csvfile_row << std::endl;
 
   pub.publish(out_msg);
 
@@ -66,6 +73,8 @@ int main(int argc, char **argv)
 
   csvfile_range.open("/tmp/csvfile_range.csv", std::ofstream::out);
   csvfile_bearing.open("/tmp/csvfile_bearing.csv", std::ofstream::out);
+  csvfile_col.open("/tmp/csvfile_col.csv", std::ofstream::out);
+  csvfile_row.open("/tmp/csvfile_row.csv", std::ofstream::out);
 
   ros::NodeHandle nh;
   cv::namedWindow("view");
@@ -80,5 +89,8 @@ int main(int argc, char **argv)
 
   csvfile_range.close();
   csvfile_bearing.close();
+
+  csvfile_col.close();
+  csvfile_row.close();
   return 0;
 }
