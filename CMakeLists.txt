@@ -11,11 +11,15 @@ sensor_msgs
 nav_msgs
 cv_bridge
 image_transport
+clog_msgs
+rosbag
 )
 
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS system)
 #find_package()
+
+find_package(OpenCV 2.4 REQUIRED)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -130,6 +134,9 @@ include_directories(include)
 ## Declare a C++ executable
 add_executable(message_sync src/message_sync.cpp)
 add_executable(image_to_laser src/image_to_laser.cpp)
+add_executable(read_bag src/rosbag_scanpose.cpp)
+add_executable(map_maker src/interactive_map_maker.cpp)
+
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(random_nodes_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
@@ -141,6 +148,16 @@ target_link_libraries(message_sync
 target_link_libraries(image_to_laser
   ${catkin_LIBRARIES}
 )
+target_link_libraries(read_bag
+  ${catkin_LIBRARIES}
+  ${OpenCV_LIBRARIES}
+)
+
+target_link_libraries(map_maker
+  ${catkin_LIBRARIES}
+)
+
+
 
 #############
 ## Install ##

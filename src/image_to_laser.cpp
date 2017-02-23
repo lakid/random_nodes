@@ -41,11 +41,11 @@ void callback(const ImageConstPtr &msg)
     {
       if (dst.at<int>(cv::Point(col,row)))
       {
-        double range = sqrt(pow(row-dst.rows/2, 2) + pow(col-dst.cols/2, 2)) * RESOLUTION ;
+        double range = sqrt(pow(row-dst.rows/2, 2) + pow(col*4-dst.cols/2, 2)) * RESOLUTION ;
         out_msg.ranges.push_back(range);
         csvfile_range << ", "<< range ;
 
-        double bearing = atan2 (row-dst.rows/2, col-dst.cols/2);
+        double bearing = atan2 (row-dst.rows/2, col*4-dst.cols/2);
         out_msg.intensities.push_back(bearing);
         csvfile_bearing << ", " << bearing;
 

@@ -55,8 +55,8 @@ int main(int argc, char **argv)
     "lvelocity_x, lvelocity_y, lvelocity_z, avelocity_x, avelocity_y, avelocity_z" <<std::endl;
 
   ros::NodeHandle nh;
-  message_filters::Subscriber<Image> image1_sub(nh, "/ardrone/bottom/image_raw", 10);
-  message_filters::Subscriber<nav_msgs::Odometry> gt_sub(nh, "/ground_truth/state", 10);
+  message_filters::Subscriber<Image> image1_sub(nh, "/hexacopter/perspective_camera/image_raw", 10);
+  message_filters::Subscriber<nav_msgs::Odometry> gt_sub(nh, "/hexacopter/mavros/local_position/odom", 10);
 
   typedef sync_policies::ApproximateTime<Image, nav_msgs::Odometry> MySyncPolicy;
   // ApproximateTime takes a queue size as its constructor argument, hence MySyncPolicy(10)
