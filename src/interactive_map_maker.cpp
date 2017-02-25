@@ -21,11 +21,16 @@ void sigintHandler(int sig)
 // 0 - don't optimise merge
 // 1 - optimise don't merge
 // 2 - optimise and merge
-// 3 - display only, sont optimse
+// 3 - display only, dont optimse/merge
 
 int main(int argc, char **argv)
 {
   int count = 50;
+  std::string st_count;
+  
+  bool keep_list[] = {0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,1,1,0,1,1,0,1,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,1,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,1,0,1,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,1,0,1,0,1,1,0,1,0,1,0,1,0,1,0,1,0,1,1,0,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,1,1,0,1,0,1,0,1,0,1,1,0,1,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,1,0,1,0,1,0,1,0,1,1,0,1,0,1,1,0,1,0,1,0,1,0,1,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,1,0,1,0,1,0,1,0,1,0,1,0,1,1,0,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,1,1,0,1,0,1,0,1,0,1,0,1,0,1,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,1,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,1};
+
+
   clog_msgs::imgForward srv;
 
   ros::init(argc, argv, "map_maker", ros::init_options::NoSigintHandler);
@@ -35,11 +40,24 @@ int main(int argc, char **argv)
 
   ros::ServiceClient srv_client = nh.serviceClient<clog_msgs::imgForward>("/cmd");
 
+  std::cout << "Enter the start index: " ;
+  std::getline(std::cin, st_count);
+
+  count  = std::atoi(st_count.c_str());
+  
+  if (!keep_list[count])
+  {
+    ROS_INFO("Input inside ignore list, skipping");
+    while(!keep_list[count])
+     count++;
+  }
+
   srv.request.cmd = 0;
   srv.request.type = count;
-
   srv_client.call(srv);
-  count++;
+
+  std::cout << std::endl << "Initialized at: "<<count  <<std::endl;
+  // count++;
 
   while (ros::ok())
   {
@@ -65,7 +83,9 @@ int main(int argc, char **argv)
       std::cout << "Skipped merging" << std::endl;
     }
 
-    count +=2;
+    count++;
+    while(!keep_list[count])
+     count++;
     ros::spinOnce();
   }
   return 0;
