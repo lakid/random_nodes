@@ -23,7 +23,7 @@
 
 #define MAP_RESOLUTION 0.05
 
-#define WRITE_BAG 0
+#define WRITE_BAG 1
 
 // A struct to hold the synchronized camera data
 // Struct to store stereo data
@@ -105,12 +105,21 @@ void callback(const sensor_msgs::Image::ConstPtr &img,
   }
 
   // Stereo dataset is class variable to store data
+
+  if (!scanpose_dataset_.empty() && 
+      (pose->header.stamp.toSec() - scanpose_dataset_.back().msg.pose.header.stamp.toSec()) <.1) // if the previous message was less than 100ms ago
+  {
+    scanpose_dataset_.pop_back();
+  }
+
   ScanposeData sd(scan, pose, gps, info, scanpose_dataset_.size());
   scanpose_dataset_.push_back(sd);
 
 #if WRITE_BAG
   outBag.write("scanpose", sd.msg.header.stamp, sd.msg);
-  outBag.write("pose", sd.msg.header.stamp, pose);
+  outBag.write("pose", pose->header.stamp, pose);
+  outBag.write("image_raw", img->header.stamp, img);
+  outBag.write("gps", gps->header.stamp, gps);
 #endif
 }
 
