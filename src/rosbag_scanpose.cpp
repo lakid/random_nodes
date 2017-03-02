@@ -23,7 +23,7 @@
 
 #define MAP_RESOLUTION 0.05
 
-#define WRITE_BAG 1
+#define WRITE_BAG 0
 
 // A struct to hold the synchronized camera data
 // Struct to store stereo data
@@ -41,10 +41,12 @@ class ScanposeData
 {
 public:
   clog_msgs::ScanPose msg;
+  sensor_msgs::Image img;
 
   ScanposeData(sensor_msgs::LaserScan &scan,
                const nav_msgs::Odometry::ConstPtr &pose,
                const nav_msgs::Odometry::ConstPtr &gps,
+               const sensor_msgs::Image::ConstPtr &img_msg,
                const sensor_msgs::CameraInfo::ConstPtr &info, int seq)
   {
     msg.header.stamp = pose->header.stamp;
@@ -54,6 +56,7 @@ public:
     msg.cinfo = *info;
     msg.imgType = 1;
     msg.cinfo.header.seq = seq;
+    img = *img_msg;
   }
 };
 
@@ -104,6 +107,7 @@ void callback(const sensor_msgs::Image::ConstPtr &img,
     }
   }
 
+  scan.angle_increment = MAP_RESOLUTION;
   // Stereo dataset is class variable to store data
 
   if (!scanpose_dataset_.empty() && 
@@ -112,15 +116,10 @@ void callback(const sensor_msgs::Image::ConstPtr &img,
     scanpose_dataset_.pop_back();
   }
 
-  ScanposeData sd(scan, pose, gps, info, scanpose_dataset_.size());
+  ScanposeData sd(scan, pose, gps, img, info, scanpose_dataset_.size());
   scanpose_dataset_.push_back(sd);
 
-#if WRITE_BAG
-  outBag.write("scanpose", sd.msg.header.stamp, sd.msg);
-  outBag.write("pose", pose->header.stamp, pose);
-  outBag.write("image_raw", img->header.stamp, img);
-  outBag.write("gps", gps->header.stamp, gps);
-#endif
+
 }
 
 // Load bag
@@ -264,11 +263,24 @@ int main(int argc, char **argv)
 
   ros::ServiceServer cmd_srv = nh.advertiseService("/cmd", cmdCallback);
 
-#if WRITE_BAG
-  outBag.open("scanpose_bag.bag", rosbag::bagmode::Write);
-#endif
+
 
   loadBag(argv[1]);
+
+#if WRITE_BAG
+  ROS_INFO("Writing Messages to bag...");
+  outBag.open("scanpose_bag.bag", rosbag::bagmode::Write);
+
+  for (int i = 0; i<scanpose_dataset_.size();i++)
+  {
+    outBag.write("scanpose", scanpose_dataset_[i].msg.header.stamp, scanpose_dataset_[i].msg);
+    outBag.write("pose", scanpose_dataset_[i].msg.pose.header.stamp, scanpose_dataset_[i].msg.pose);
+    outBag.write("image_raw", scanpose_dataset_[i].img.header.stamp, scanpose_dataset_[i].img);
+    outBag.write("gps", scanpose_dataset_[i].msg.gps.header.stamp, scanpose_dataset_[i].msg.gps);
+  }
+    outBag.close();
+#endif
+
 
   int dataset_length = scanpose_dataset_.size();
   std::cout << std::endl
@@ -276,9 +288,7 @@ int main(int argc, char **argv)
 
   ros::spin();
 
-#if WRITE_BAG
-  outBag.close();
-#endif
+
 
   return 0;
 }
