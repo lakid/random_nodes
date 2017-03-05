@@ -13,13 +13,14 @@ cv_bridge
 image_transport
 clog_msgs
 rosbag
+camera_info_manager
 )
 
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS system)
 #find_package()
 
-find_package(OpenCV 2.4 REQUIRED)
+find_package(OpenCV REQUIRED)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -119,8 +120,11 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(include)
-
+include_directories(
+  ${catkin_INCLUDE_DIRS}
+  ${PROJECT_SOURCE_DIR}/include
+)
+include_directories( ${OpenCV_INCLUDE_DIRS} )
 ## Declare a C++ library
 # add_library(random_nodes
 #   src/${PROJECT_NAME}/random_nodes.cpp

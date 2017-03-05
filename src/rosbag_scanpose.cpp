@@ -1,6 +1,7 @@
 #include <ros/ros.h>
 #include <rosbag/bag.h>
 #include <rosbag/view.h>
+#include <camera_info_manager/camera_info_manager.h>
 
 #include <boost/foreach.hpp>
 
@@ -23,7 +24,7 @@
 
 #define MAP_RESOLUTION 0.05
 
-#define WRITE_BAG 0
+#define WRITE_BAG 1
 
 // A struct to hold the synchronized camera data
 // Struct to store stereo data
@@ -36,6 +37,10 @@
 #if WRITE_BAG
  rosbag::Bag outBag;
 #endif
+
+boost::shared_ptr<camera_info_manager::CameraInfoManager> cinfo_;
+std::string camera_info_url_;
+sensor_msgs::CameraInfo ci_;
 
 class ScanposeData
 {
@@ -53,8 +58,10 @@ public:
     msg.scan = scan;
     msg.pose = *pose;
     msg.gps = *gps;
-    msg.cinfo = *info;
+    // msg.cinfo = *info;
+    msg.cinfo = ci_;
     msg.imgType = 1;
+    msg.cinfo.header.stamp = img_msg->header.stamp;
     msg.cinfo.header.seq = seq;
     img = *img_msg;
   }
@@ -249,7 +256,10 @@ bool cmdCallback(clog_msgs::imgForward::Request &req, clog_msgs::imgForward::Res
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "image_converter");
-  ros::NodeHandle nh("~");
+  ros::NodeHandle nh;
+  ros::NodeHandle pnh("~");
+  
+  std::string info_file_name;
 
   if (argc < 2)
   {
@@ -262,8 +272,9 @@ int main(int argc, char **argv)
   scanpose_pub_ = nh.advertise<clog_msgs::ScanPose>("/scanpose", 1000);
 
   ros::ServiceServer cmd_srv = nh.advertiseService("/cmd", cmdCallback);
-
-
+  nh.param("camera_info_url", camera_info_url_, std::string(""));
+  cinfo_.reset(new camera_info_manager::CameraInfoManager(nh, "perspective_camera", camera_info_url_));
+  ci_ = cinfo_->getCameraInfo();
 
   loadBag(argv[1]);
 
@@ -273,10 +284,11 @@ int main(int argc, char **argv)
 
   for (int i = 0; i<scanpose_dataset_.size();i++)
   {
-    outBag.write("scanpose", scanpose_dataset_[i].msg.header.stamp, scanpose_dataset_[i].msg);
-    outBag.write("pose", scanpose_dataset_[i].msg.pose.header.stamp, scanpose_dataset_[i].msg.pose);
-    outBag.write("image_raw", scanpose_dataset_[i].img.header.stamp, scanpose_dataset_[i].img);
-    outBag.write("gps", scanpose_dataset_[i].msg.gps.header.stamp, scanpose_dataset_[i].msg.gps);
+    outBag.write("/scanpose", scanpose_dataset_[i].msg.header.stamp, scanpose_dataset_[i].msg);
+    outBag.write("/hexacopter/mavros/local_position/odom", scanpose_dataset_[i].msg.pose.header.stamp, scanpose_dataset_[i].msg.pose);
+    outBag.write("/hexacopter/perspective_camera/image_raw", scanpose_dataset_[i].img.header.stamp, scanpose_dataset_[i].img);
+    outBag.write("/hexacopter/gps/rtkfix", scanpose_dataset_[i].msg.gps.header.stamp, scanpose_dataset_[i].msg.gps);
+    outBag.write("/hexacopter/perspective_camera/camera_info", scanpose_dataset_[i].msg.cinfo.header.stamp, scanpose_dataset_[i].msg.cinfo);
   }
     outBag.close();
 #endif
@@ -287,8 +299,6 @@ int main(int argc, char **argv)
             << "extracted length: " << dataset_length << std::endl;
 
   ros::spin();
-
-
 
   return 0;
 }
