@@ -1,4 +1,6 @@
 # Random Nodes
+**Author: Lakshitha Dantanarayana**
+**License: BSD 2-Clause**
 
 This is a repository for random ROS nodes designed to do random things. Usually hacked together in the shortest possible time.
 
